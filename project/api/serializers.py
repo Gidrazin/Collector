@@ -45,13 +45,31 @@ class ChangePasswordSerializer(Serializer):
                 'Текущий пароль неверный!'
             )
         return data
-    
+
+
 class CollectSerializer(ModelSerializer):
     class Meta:
         model = Collect
         fields = '__all__'
 
+
 class PaymentSerializer(ModelSerializer):
     class Meta:
         model = Payment
         fields = '__all__'
+
+
+class GetTokenSerializer(Serializer):
+    password = CharField(required=True)
+    email = EmailField(required=True)
+
+    def validate(self, data):
+        user = authenticate(
+            username=data.get('email'),
+            password=data.get('password')
+        )
+        if user is None:
+            raise ValidationError(
+                'Пара password, email в базе не найдена!'
+            )
+        return data
