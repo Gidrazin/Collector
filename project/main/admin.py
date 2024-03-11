@@ -17,8 +17,6 @@ class CollectAdmin(admin.ModelAdmin):
         'reason',
         'description',
         'total',
-        'current',
-        'donaters_cnt',
         'start',
         'end',
     )

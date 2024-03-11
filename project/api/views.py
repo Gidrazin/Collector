@@ -1,12 +1,13 @@
+from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import SAFE_METHODS, AllowAny, IsAuthenticated
 from api.serializers import (UserSerializer, ChangePasswordSerializer,
-                              CollectSerializer, PaymentSerializer,
-                              GetTokenSerializer,
+                              GetCollectSerializer, PostCollectSerializer, 
+                              PaymentSerializer, GetTokenSerializer,
                             )
 from api.permissions import IsAuthorOrReadOnly
 from users.models import User
@@ -71,10 +72,28 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class CollectViewSet(viewsets.ModelViewSet):
     queryset = Collect.objects.all()
-    serializer_class = CollectSerializer
     permission_classes = IsAuthorOrReadOnly,
+
+    def get_serializer_class(self):
+        if self.request.method in SAFE_METHODS:
+            return GetCollectSerializer
+        return PostCollectSerializer
 
 
 class PaymentViewSet(viewsets.ModelViewSet):
     queryset = Payment.objects.all()
     serializer_class = PaymentSerializer
+
+    def create(self, request, *args, **kwargs):
+        # Отправим e-mail
+        send_mail(
+            'Донат отправлен!',
+            'Донат отправлен',
+            'from@example.com',
+            ['to@example.com'],
+            fail_silently=False,
+        )
+        return super().create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

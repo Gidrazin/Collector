@@ -39,15 +39,7 @@ class Collect(models.Model):
     total = models.PositiveIntegerField(
         verbose_name='Сумма для сбора',
         blank=True,
-    )
-
-    current = models.PositiveIntegerField(
-        verbose_name='Собрано средств',
-        blank=True,
-    )
-
-    donaters_cnt = models.PositiveSmallIntegerField(
-        verbose_name='Количество донатов',
+        null=True
     )
 
     image = models.ImageField(
@@ -65,10 +57,6 @@ class Collect(models.Model):
     end = models.DateTimeField(
         verbose_name='Срок',
         help_text='гггг-мм-дд ч:м',
-    )
-
-    donaters = models.ManyToManyField(
-        'Payment',
     )
 
     @property
@@ -89,13 +77,15 @@ class Payment(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='donater',
+        related_name='payments',
         verbose_name='Донатер'
     )
 
     event = models.ForeignKey(
         Collect,
         on_delete=models.CASCADE,
+        related_name='payments',
+        verbose_name='Событие'
     )
 
     amount = models.PositiveSmallIntegerField()

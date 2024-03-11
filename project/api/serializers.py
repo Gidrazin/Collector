@@ -1,5 +1,7 @@
 from django.contrib.auth import authenticate
 from django.core.files.base import ContentFile
+from django.db.models import Sum
+from drf_base64.fields import Base64ImageField
 from rest_framework.serializers import (CharField, EmailField, ImageField,
                                         IntegerField, ModelSerializer,
                                         ReadOnlyField, Serializer,
@@ -47,17 +49,69 @@ class ChangePasswordSerializer(Serializer):
         return data
 
 
-class CollectSerializer(ModelSerializer):
-    class Meta:
-        model = Collect
-        fields = '__all__'
-
-
 class PaymentSerializer(ModelSerializer):
+    user = UserSerializer(
+        read_only=True
+    )
+
     class Meta:
         model = Payment
-        fields = '__all__'
+        fields = ('user', 'event', 'amount')
 
+
+class GetCollectSerializer(ModelSerializer):
+    author = UserSerializer(
+        read_only=True
+    )
+    payments = PaymentSerializer(
+        many=True
+    )
+    payments_cnt = SerializerMethodField()
+    current = SerializerMethodField()
+
+    def get_payments_cnt(self, obj):
+        return obj.payments.count()
+
+    def get_current(self, obj):
+        return obj.payments.aggregate(Sum('amount'))['amount__sum']
+
+    class Meta:
+        model = Collect
+        fields = (
+            'author',
+            'payments',
+            'payments_cnt',
+            'title',
+            'reason',
+            'image',
+            'description',
+            'total',
+            'current',
+            'start',
+            'end'
+        )
+
+class PostCollectSerializer(ModelSerializer):
+    image = Base64ImageField(
+        required=False,
+        allow_null=True,
+        max_length=None,
+        use_url=True
+    )
+
+    class Meta:
+        model = Collect
+        fields = (
+            'author',
+            'payments',
+            'title',
+            'reason',
+            'image',
+            'description',
+            'total',
+            'start',
+            'end'
+        )
 
 class GetTokenSerializer(Serializer):
     password = CharField(required=True)
